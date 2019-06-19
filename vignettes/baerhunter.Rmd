@@ -1,0 +1,171 @@
+---
+title: "baerhunter : Discovery and analysis of expressed non-coding regions in bacterial RNA-seq data"
+author: "Alina Ozuna and Irilenia Nobeli"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{baerhunter}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r "knitr config", cache = FALSE, include=FALSE}
+require("knitr")
+opts_chunk$set(echo = TRUE, 
+               comment = "#>")
+opts_knit$set(root.dir = "./")
+```
+
+```{r  echo = FALSE}
+library(baerhunter)
+```
+
+
+## Introduction
+The analysis of bacterial next-generation sequencing data (RNA-seq) is often limited to coding regions and well-known regulatory RNA families. This is primarily because genome annotations are incomplete, even for model organisms. In addition, although many bacterial genes do not have 5 prime and 3 prime untranslated regions (UTRs), some do but they are rarely annotated , so these regions too are often left out of standard analyses like differential gene expression pipelines.
+
+We present here an example of how to run *baerhunter*, a simple program that attempts to annotate expressed non-coding regions using the RNA-seq signal from multiple samples. Baerhunter's algorithm relies on: 
+
+* a pre-existing annotation file (that should contain at least the known CDS regions in the genome) and 
+* the read coverage (as provided by BAM files) to decide what the limits of transcripts are. 
+
+The core function of baerhunter produces a new annotation file (in gff3 format) that includes information on the predicted putative sRNAs and UTRs (coordinates, strand and upstream/downstream features). Other additional modules can filter this file based on expression level or allow differential feature expression analysis (using by default DESeq2 but this can be adapted easily to a different software for calling events of statistically significant differential expression).
+
+Baerhunter does not attempt to characterise or classify the resulting predictions beyond labelling them as "putative sRNA", if they are found within the intergenic regions of the annotated genome or "putative UTR", if they are found adjacent to an annotated gene. Although baerhunter provides reasonable predictions of transcript limits in most cases, it cannot be expected to provide nucleotide-level accuracy of the start and end of the transcript because of the use of a naive algorithm and technical and biological noise in the data used to derive the limits.
+
+In this example walkthrough, we reproduce part of the real-data analysis presented in the *baerhunter* manuscript (runs using a single set of parameters have been included but it is trivial to repeat with different parameters). The data originate from a 6 samples from the RNA-seq dataset of Cortes et al. (ArrayExpress E-MTAB-1616). Here, we use only a subset of the original BAM files corresponding to reads mapping to coordinates:  1 - 10,000 in the genome of M. tuberculosis (genome ID: AL123456.3). 
+
+### Reference
+If you use baerhunter, please cite:
+
+A. Ozuna, D. Liberto, R. M. Joyce, K.B. Arnvig, I. Nobeli. baerhunter: An R package for the discovery and analysis of expressed non-coding regions in bacterial RNA-seq data. doi: https://doi.org/10.1101/612937
+
+## Installation
+To install baerhunter from the github repository, install and load first devtools:
+
+```
+install.packages("devtools")
+library(devtools)
+```
+
+and then install baerhunter:
+```
+devtools::install_github("irilenia/baerhunter")
+```
+
+## Summary of steps
+A typical run of *baerhunter* will involve:
+
+* Reading in a series of bam files (aligned RNA-seq reads) and an existing annotation file for a genome in gff3 format and producing an updated annotation that includes putative non-coding expressed regions
+* Counting reads against the features listed in the updated annotation
+* Filtering features according to their level of expression
+* Carrying out downstream analysis, e.g. differential feature expression
+
+## Updating the genome annotation using the RNA-seq signal
+We start by calling baerhunter's *feature_file_editor()* function to predict intergenic elements (sRNAs and UTRs) based on the RNA-seq signal and existing annotation (available as a gff3 file).
+The bam files used in this analysis are reduced versions of the originals covering only the first 10,000 positions in the genome.  
+
+```{r preliminaries}
+# create a directory to hold the output files..
+if (!(dir.exists("./output_BH_5_10/"))) { dir.create("./output_BH_5_10/")
+}
+```
+
+```{r update_the_genome_annotation}
+
+feature_file_editor(bam_directory=system.file("extdata/", package="baerhunter"),  
+                   original_annotation_file="Mycobacterium_tuberculosis_h37rv.ASM19595v2.40.chromosome.Chromosome.gff3",
+                    annot_file_dir = system.file("extdata/", package="baerhunter"),
+                    output_file="output_BH_5_10/mtb_5_10.gff3", 
+                    original_sRNA_annotation="ncRNA", 
+                    low_coverage_cutoff=5, 
+                    min_sRNA_length=40, 
+                    high_coverage_cutoff=10, 
+                    min_UTR_length=50, 
+                    paired_end_data=FALSE, 
+                    strandedness="stranded")
+
+```
+
+
+
+
+## Counting reads against the new annotation produced by baerhunter
+Once new putative ncRNA features are added to the genome annotation, we use the *count_features()* function to count reads against both the original and newly annotated features.
+
+```{r count_reads_against_features}
+count_features(bam_dir = system.file("extdata", package="baerhunter"),
+               annotation_dir= "output_BH_5_10/", 
+               annotation_file = "mtb_5_10.gff3", 
+               output_dir = "output_BH_5_10/",
+               chromosome_alias_file = system.file("extdata","chromosome.txt", package="baerhunter") , 
+               target_features = c("gene", "putative_sRNA", "putative_UTR"), 
+               strandedness = "stranded", 
+               is_paired_end= FALSE)
+
+
+
+```
+
+## Filtering predictions by level of expression
+Occasionally, it is preferred to filter out low-expressed transcripts, both because of noise in the RNA-seq data and because features with low expression are unlikely to be useful for further downstream analysis. The *tpm_flag_filtering()* function is used here to keep only putative ncRNAs with higher expression. 
+
+To filter transcripts by expression, we calculate first TPM (transcripts per million) values for each feature of interest using the *tpm_normalisation()* function, then add expression level flags to the annotation file and finally filter out transcripts with flags corresponding to lower expression values.
+
+```{r filtering_by_expression}
+# Filter out low expression putative sRNAs
+# Calculate TPM values
+tpm<- tpm_normalisation(count_table="output_BH_5_10/putative_sRNA_Counts.csv", 
+                  complete_gff="output_BH_5_10/mtb_5_10.gff3", 
+                  target_feature="putative_sRNA", 
+                  output_file="output_BH_5_10/putative_sRNA_TPM.csv")
+
+
+#repeat for putative UTRs
+tpm <- tpm_normalisation(count_table="output_BH_5_10/putative_UTR_Counts.csv", 
+                  complete_gff="output_BH_5_10/mtb_5_10.gff3", 
+                  target_feature="putative_UTR", 
+                  output_file="output_BH_5_10/putative_UTR_TPM.csv")
+
+# produce a single file of TPM values for all non-coding RNAs
+system("( cat output_BH_5_10/putative_sRNA_TPM.csv ; tail -n +2 output_BH_5_10/putative_UTR_TPM.csv ; ) | cat > output_BH_5_10/putative_ncRNA_TPM.csv")
+
+
+# flag features according to their TPM values
+tpm_flagging( tpm_data="output_BH_5_10/putative_ncRNA_TPM.csv", 
+              complete_annotation="output_BH_5_10/mtb_5_10.gff3", 
+              output_file="output_BH_5_10/flagged_mtb_5_10.gff3")
+
+
+# filter features according to their flags
+tpm_flag_filtering( complete_annotation_file="output_BH_5_10/flagged_mtb_5_10.gff3", 
+                    target_flag="high_expression_hit", 
+                    target_features=c("putative_sRNA", "putative_UTR"), 
+                    output_file="output_BH_5_10/filtered_high_expression_sRNA_mtb_5_10.gff3")
+
+```
+
+## Example of downstream analysis - differential feature expression with DESeq2
+In this example, we create a counts file that contains counts for both coding genes and putative sRNA elements and use DESeq2 to identify differentially expressed features.
+In the dataset used here, we have 3 samples from exponentially growing Mtb and 3 samples grown in starved condition. We do not consider any other covariates.
+Following differential expression analysis with DESeq2, we print out the 10 top "gene" features (ordered by adjusted p-value), followed by the top 10 sRNA features.
+
+
+```{r differential_expression}
+# Create a counts file with counts from genes and putative_sRNAs
+system("( cat output_BH_5_10/gene_Counts.csv ; tail -n +2 output_BH_5_10/putative_sRNA_Counts.csv; ) | cat > output_BH_5_10/allCounts.csv")
+
+#Call differential_expression() function
+de.res <- differential_expression(feature_count_file="output_BH_5_10/allCounts.csv", metadata_file=system.file("extdata", "conditions.txt", package="baerhunter"), cutoff_value=10, multiple_variables=FALSE, main_condition="condition", output_file_name="output_BH_5_10/allCounts_diff_expression.csv")
+
+summary(de.res)
+resOrdered <- de.res[order(de.res$padj),]
+resOrdered[grep('gene', rownames(resOrdered)),]
+resOrdered[grep('putative', rownames(resOrdered)),]
+
+```
+
+```{r session information}
+sessionInfo()
+
+```
