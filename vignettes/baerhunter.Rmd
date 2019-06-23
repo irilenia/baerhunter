@@ -53,6 +53,11 @@ and then install baerhunter:
 devtools::install_github("irilenia/baerhunter")
 ```
 
+Vignettes are no longer installed by default with install_github so run the following command, if you want to be able to access the vignette from RStudio:
+```
+devtools::install_github("irilenia/baerhunter", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"), force=TRUE)
+```
+
 ## Summary of steps
 A typical run of *baerhunter* will involve:
 
