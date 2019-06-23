@@ -2,5 +2,5 @@
 inst/doc
 doc
 Meta
-.DS_Store
+**/.DS_Store
 **/.Rhistory
