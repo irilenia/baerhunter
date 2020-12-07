@@ -59,26 +59,51 @@ peak_union_calc <- function(bam_location = ".", target_strand, peak_width, paire
     ## to establish parameters for selecting boundaries of expression peaks
     # makes an atomic list from covg values
     vals <- runValue(strand_cvg)
-    probs <- c(0.05, 0.1, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75)
-    #all_probs <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.8, 0.9, 0.95)
-    lo_percent <- quantile(vals, probs=probs)
+    #probs <- c(0.05, 0.1, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75)
+    probs_10 <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.8, 0.9)
+    #lo_percent <- quantile(vals, probs=probs)
+    #lo_percent
+    ten_percent<-quantile(vals, probs=probs_10)
+    #ten_percent
     # find differences between percentiles of 5%
-    diff_5<-diff(lo_percent)
+    #diff_5<-diff(lo_percent)
+    #diff_5
+    diff_10<-diff(ten_percent)
+    #plot(probs_10[2:9], diff_10)
+    #diff_10
     found<-FALSE
-    # difference between 5-10% as baseline difference
-    baseline<-diff_5[1]
-    # use percentile where baseline difference doubles in one 5% interval
-    for (i in 1:length(diff_5)){
-      if (found != TRUE & diff_5[i] > baseline*2){
-        low_coverage_cutoff <- lo_percent[i]
+    # difference between 5-10% as baseline difference--still too low to discriminate, lots of spurious calls
+    # change to where difference increases from first difference by 3 (use 10-20 as baseline?)
+    for (i in 2:length(diff_10)){
+      if (found != TRUE & diff_10[i] > diff_10[1]*3){
+        low_coverage_cutoff <- ten_percent[i]
         found<-TRUE
       }
     }
+    
+    low_coverage_cutoff
     # set 5 as lowest possible low coverage cutoff
     if (low_coverage_cutoff <5){
       low_coverage_cutoff<-5
     }
     high_coverage_cutoff <- low_coverage_cutoff * 2
+    
+    #all_probs <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.8, 0.9, 0.95)
+    #lo_percent <- quantile(vals, probs=probs)
+    # find differences between percentiles of 5%
+    #diff_5<-diff(lo_percent)
+    #found<-FALSE
+    # difference between 5-10% as baseline difference
+    #baseline<-diff_5[1]
+    # use percentile where baseline difference doubles in one 5% interval
+    #for (i in 1:length(diff_5)){
+      #if (found != TRUE & diff_5[i] > baseline*2){
+        #low_coverage_cutoff <- lo_percent[i]
+        #found<-TRUE
+      #}
+    #}
+    # set 5 as lowest possible low coverage cutoff
+    
     #check what percentile that corresponds to:
     #rownames(lo_percent)[lo_percent == low_coverage_cutoff]
     
@@ -183,14 +208,13 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
 #' @export
 sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   ## This function predicts sRNAs.
+  IGR_sRNAs<-IRanges()
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Select only the ranges that do not overlap the annotated features. Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
   subs_over<-subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L)
   #which union_peak_ranges are not in the subset of overlapping ranges?
-  u_p_IRange<-as.data.frame(union_peak_ranges)
-  #non_overlap<- !(u_p_IRange %in% as.data.frame(subs_over))
-  IGR_sRNAs <- union_peak_ranges[!(u_p_IRange %in% as.data.frame(subs_over)),]
+  IGR_sRNAs <- union_peak_ranges[! union_peak_ranges %in% subs_over,]
   
   ## Construct the IDs for the new sRNAs to be added into the attribute colmn of the annotation.
   if (target_strand=="+") {
@@ -219,6 +243,7 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 #' @export
 UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, min_UTR_length) {
   ## This function predicts UTRs.
+  UTRs<-IRanges()
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Find the peak union ranges that overlap with genomic features. Also, include the ranges that do not overlap the features but start/finish 1 position away from it.
@@ -228,10 +253,10 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
   ## Cut the overlapping features on teh border where they overlap with the genomic features.
   split_features <- disjoin(overapping_features)
   ## Now select only the UTR "overhangs" that are created by cutting overlapping features on the border.
-  sub_overs <- subsetByOverlaps(split_features, strand_IRange)
+  #sub_overs <- subsetByOverlaps(split_features, strand_IRange)
   # change to dataframe so %in% will work
-  split_features.df <- as.data.frame(split_features)
-  UTRs <- split_features[! (split_features.df %in% as.data.frame(sub_overs))]
+  #split_features.df <- as.data.frame(split_features)
+  UTRs <- split_features[! split_features %in% subsetByOverlaps(split_features, strand_IRange)]
   ## Select only UTRs that satisfy the minimum length condition.
   UTRs <- UTRs[width(UTRs)>=min_UTR_length,]
   ## Construct the IDs for the new UTRs to be added into the attribute colmn of the annotation.
@@ -345,7 +370,7 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #' 
 #' @export
 feature_file_editor <- function(bam_directory = ".", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
-  
+
   
   ## Plus strand
   plus_strand_peaks <- peak_union_calc(bam_location = bam_directory, "+", min_sRNA_length, paired_end_data, strandedness)
