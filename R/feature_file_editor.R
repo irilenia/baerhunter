@@ -1,12 +1,14 @@
 
 #' Peak union calculation
 #' 
+#' Edited JJS 21 Feb for paired end adjustment (removed all automatic parameter adjustment)
+#' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
 #' @param bam_location The directory containing BAM files.
 #' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
-#' @param low_coverage_cutoff An interger indicating the low coverage threshold value.
-#' @param high_coverage_cutoff An interger indicating the high coverage threshold value.
+#' @param low_coverage_cutoff An integer indicating the low coverage threshold value.
+#' @param high_coverage_cutoff An integer indicating the high coverage threshold value.
 #' @param peak_width An interger indicating the minimum peak width.
 #' @param paired_end_data A boolean indicating if the reads are paired-end.
 #' @param strandedness A string outlining the type of the sequencing library: stranded, or reversely stranded.
@@ -22,8 +24,6 @@
 peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cutoff, high_coverage_cutoff,  peak_width, paired_end_data = FALSE, strandedness  = "unstranded") {
   ## Find all BAM files in the directory.
   bam_files <- list.files(path = bam_location, pattern = ".BAM$", full.names = TRUE, ignore.case = TRUE)
-  
-  
   peak_union <- IRanges()
   ## Go over each BAM file to extract coverage peaks for a target strand and gradually build a union of all peak sets.
   for (f in bam_files) {
@@ -34,7 +34,9 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
       strand_alignment <- file_alignment[strand(file_alignment)==target_strand,]
     } else if (paired_end_data == TRUE & strandedness  == "stranded") {
       file_alignment <- readGAlignmentPairs(f, strandMode = 1)
-      strand_alignment <- file_alignment[strand(file_alignment)==target_strand,]
+      strand_alignment_unmerged <- file_alignment[strand(file_alignment)==target_strand,]
+      #coerce to get single ranges
+      strand_alignment <- granges(strand_alignment_unmerged)
     } else if (paired_end_data == FALSE & strandedness  == "reversely_stranded") {
       file_alignment <- readGAlignments(f)
       relevant_strand <- c()
@@ -46,7 +48,9 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
       strand_alignment <- file_alignment[strand(file_alignment)==relevant_strand,]
     } else if (paired_end_data == TRUE & strandedness  == "reversely_stranded") {
       file_alignment <- readGAlignmentPairs(f, strandMode = 2)
-      strand_alignment <- file_alignment[strand(file_alignment)==target_strand,]
+      strand_alignment_unmerged <- file_alignment[strand(file_alignment)==target_strand,]
+      #coerce to get single ranges
+      strand_alignment <- granges(strand_alignment_unmerged)
     }
     ## Create a strand coverage vector and extract it
     strand_cvg <- coverage(strand_alignment)
@@ -59,6 +63,9 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     }
     ## Cut the coverage vector to obtain the expression peaks with the coverage above the low cut-off values.
     peaks <- slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
+    ## Filter out peaks for transcript lengths above 95% percentile
+    #len_threshold <- quantile(width(all_peaks), prob=0.95)
+    #peaks <- all_peaks[width(all_peaks) < len_threshold]
     ## Examine the peaks for the stretches of coverage above the high cut-off. The stretches have to be a defined width.
     test <- viewApply(peaks, function(x) peak_analysis(x,high_coverage_cutoff,peak_width))
     ## Select only the peaks that satisfy the high cut-off condition.
@@ -67,21 +74,23 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     peaks_IRange <- IRanges(start = start(selected_peaks), end = end(selected_peaks))
     ## Calculate the peak union in with the previous peak sets.
     peak_union <- union(peak_union,peaks_IRange)
+    # intersect gives no predictions with first bam. could use after first bam
+    #peak_union <- intersect(peak_union, peaks_IRange)
   }
   return(peak_union)
 }
 
 
 
-#' Peak checking for the second coveralge threshold and width.
+#' Peak checking for the second coverage threshold and width.
 #' 
 #' This is a helper function that is used to examine if the peak had a continuous stretch of a given width that has coverage above the high cut-off value.
 #' 
-#' @param View_line A line from a RIeViews object.
-#' @param high_cutoff An interger indicating the high coverage threshold value.
-#' @param min_sRNA_length An interger indicating the minimum sRNA length (peak width).
+#' @param View_line A line from a RleViews object.
+#' @param high_cutoff An integer indicating the high coverage threshold value.
+#' @param min_sRNA_length An integer indicating the minimum sRNA length (peak width).
 #' 
-#' @return Returns a RIeViews line if it satisfies conditions.
+#' @return Returns a RleViews line if it satisfies conditions.
 #' 
 #' @export
 peak_analysis <- function(View_line, high_cutoff, min_sRNA_length) {
@@ -313,7 +322,7 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #'
 #' 
 #' @export
-feature_file_editor <- function(bam_directory = ".", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
+feature_file_editor_pe <- function(bam_directory = ".", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
   
   
   ## Plus strand
@@ -358,7 +367,7 @@ feature_file_editor <- function(bam_directory = ".", original_annotation_file, a
     header <- c(header,f_line)
     i <- i+1
   }
-  # add a line to indicate the origin of the file (single # commas shroulrd be ignored by programs)
+  # add a line to indicate the origin of the file (single # commas should be ignored by programs)
   header <- c(header, "# produced by baerhunter")
   
   print("Building output file now")
@@ -367,7 +376,6 @@ feature_file_editor <- function(bam_directory = ".", original_annotation_file, a
   write.table(header, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
   write.table(annotation_dataframe, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
   
-  return("Done!")
+  return("FFE_pe, Done!")
   
 }
-
