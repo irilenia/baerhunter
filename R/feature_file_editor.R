@@ -1,7 +1,6 @@
-## adjusted to merge paired end reads (no percentile length threshold for peaks)
-## added definition to try to eliminate bug
-
 #' Peak union calculation
+#' 
+#' Edited JJS for PE improvement 21 Feb, 2022
 #' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
@@ -166,6 +165,8 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
 #' @export
 sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   ## This function predicts sRNAs.
+  ## Create function to make sure %in% is base::match and not S4Vectors
+  ##"%in%" <- function(x, table) base::match(x, table, nomatch = 0) > 0
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Select only the ranges that do not overlap the annotated features. Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
@@ -198,6 +199,8 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 #' @export
 UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, min_UTR_length) {
   ## This function predicts UTRs.
+  ## Create function to make sure %in% is base::match and not S4Vectors
+  ## "%in%" <- function(x, table) base::match(x, table, nomatch = 0) > 0
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Find the peak union ranges that overlap with genomic features. Also, include the ranges that do not overlap the features but start/finish 1 position away from it.
