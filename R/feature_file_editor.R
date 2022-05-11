@@ -63,9 +63,6 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     }
     ## Cut the coverage vector to obtain the expression peaks with the coverage above the low cut-off values.
     peaks <- slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
-    ## Filter out peaks for transcript lengths above 95% percentile
-    #len_threshold <- quantile(width(all_peaks), prob=0.95)
-    #peaks <- all_peaks[width(all_peaks) < len_threshold]
     ## Examine the peaks for the stretches of coverage above the high cut-off. The stretches have to be a defined width.
     test <- viewApply(peaks, function(x) peak_analysis(x,high_coverage_cutoff,peak_width))
     ## Select only the peaks that satisfy the high cut-off condition.
@@ -74,13 +71,9 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     peaks_IRange <- IRanges(start = start(selected_peaks), end = end(selected_peaks))
     ## Calculate the peak union in with the previous peak sets.
     peak_union <- union(peak_union,peaks_IRange)
-    # intersect gives no predictions with first bam. could use after first bam
-    #peak_union <- intersect(peak_union, peaks_IRange)
   }
   return(peak_union)
 }
-
-
 
 #' Peak checking for the second coverage threshold and width.
 #' 
@@ -166,6 +159,8 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
 #' @export
 sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   ## This function predicts sRNAs.
+  ## Create function to make sure %in% is base::match and not S4Vectors
+  "%in%" <- function(x, table) base::match(x, table, nomatch = 0) > 0
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Select only the ranges that do not overlap the annotated features. Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
@@ -198,6 +193,8 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 #' @export
 UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, min_UTR_length) {
   ## This function predicts UTRs.
+  ## Create function to make sure %in% is base::match and not S4Vectors
+  "%in%" <- function(x, table) base::match(x, table, nomatch = 0) > 0
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Find the peak union ranges that overlap with genomic features. Also, include the ranges that do not overlap the features but start/finish 1 position away from it.
