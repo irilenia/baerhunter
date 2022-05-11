@@ -1,7 +1,6 @@
-
 #' Peak union calculation
 #' 
-#' Edited JJS 21 Feb for paired end adjustment (removed all automatic parameter adjustment)
+#' Edited JJS for PE improvement 21 Feb, 2022
 #' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
@@ -63,6 +62,9 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     }
     ## Cut the coverage vector to obtain the expression peaks with the coverage above the low cut-off values.
     peaks <- slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
+    ## Filter out peaks for transcript lengths above 95% percentile
+    #len_threshold <- quantile(width(all_peaks), prob=0.95)
+    #peaks <- all_peaks[width(all_peaks) < len_threshold]
     ## Examine the peaks for the stretches of coverage above the high cut-off. The stretches have to be a defined width.
     test <- viewApply(peaks, function(x) peak_analysis(x,high_coverage_cutoff,peak_width))
     ## Select only the peaks that satisfy the high cut-off condition.
@@ -71,6 +73,8 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     peaks_IRange <- IRanges(start = start(selected_peaks), end = end(selected_peaks))
     ## Calculate the peak union in with the previous peak sets.
     peak_union <- union(peak_union,peaks_IRange)
+    # intersect gives no predictions with first bam. could use after first bam
+    #peak_union <- intersect(peak_union, peaks_IRange)
   }
   return(peak_union)
 }
