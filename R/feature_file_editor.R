@@ -1,6 +1,7 @@
 #' Peak union calculation
 #' 
 #' Edited JJS for PE improvement 21 Feb, 2022
+#' Edited JJS for match bug fix 13 May, 2022
 #' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
@@ -8,7 +9,7 @@
 #' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
 #' @param low_coverage_cutoff An integer indicating the low coverage threshold value.
 #' @param high_coverage_cutoff An integer indicating the high coverage threshold value.
-#' @param peak_width An interger indicating the minimum peak width.
+#' @param peak_width An integer indicating the minimum peak width.
 #' @param paired_end_data A boolean indicating if the reads are paired-end.
 #' @param strandedness A string outlining the type of the sequencing library: stranded, or reversely stranded.
 #' 
@@ -62,9 +63,6 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     }
     ## Cut the coverage vector to obtain the expression peaks with the coverage above the low cut-off values.
     peaks <- slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
-    ## Filter out peaks for transcript lengths above 95% percentile
-    #len_threshold <- quantile(width(all_peaks), prob=0.95)
-    #peaks <- all_peaks[width(all_peaks) < len_threshold]
     ## Examine the peaks for the stretches of coverage above the high cut-off. The stretches have to be a defined width.
     test <- viewApply(peaks, function(x) peak_analysis(x,high_coverage_cutoff,peak_width))
     ## Select only the peaks that satisfy the high cut-off condition.
@@ -73,8 +71,6 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
     peaks_IRange <- IRanges(start = start(selected_peaks), end = end(selected_peaks))
     ## Calculate the peak union in with the previous peak sets.
     peak_union <- union(peak_union,peaks_IRange)
-    # intersect gives no predictions with first bam. could use after first bam
-    #peak_union <- intersect(peak_union, peaks_IRange)
   }
   return(peak_union)
 }
@@ -167,8 +163,8 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   match <- function(x, table) IRanges::match(x, table, nomatch = 0)
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
-  ## Select only the ranges that do not overlap the annotated features. Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
-  #IGR_sRNAs <- union_peak_ranges[! union_peak_ranges IRanges::"%in%" subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L),]
+  ## Select only the ranges that do not overlap the annotated features
+  ## Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
   IGR_sRNAs <- union_peak_ranges[match(union_peak_ranges, subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L)) == 0,]
   ## Construct the IDs for the new sRNAs to be added into the attribute colmn of the annotation.
   if (target_strand=="+") {
@@ -208,11 +204,10 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
   ## Cut the overlapping features on teh border where they overlap with the genomic features.
   split_features <- disjoin(overapping_features)
   ## Now select only the UTR "overhangs" that are created by cutting overlapping features on the border.
-  #UTRs <- split_features[! split_features %in% subsetByOverlaps(split_features, strand_IRange)]
   UTRs <- split_features[match(split_features, subsetByOverlaps(split_features, strand_IRange)) == 0]
   ## Select only UTRs that satisfy the minimum length condition.
   UTRs <- UTRs[width(UTRs)>=min_UTR_length,]
-  ## Construct the IDs for the new UTRs to be added into the attribute colmn of the annotation.
+  ## Construct the IDs for the new UTRs to be added into the attribute column of the annotation.
   if (target_strand=="+") {
     names(UTRs) <- apply(as.data.frame(UTRs),1, function(x) paste("ID=putative_UTR:p", x[1], "_", x[2],";", sep = ''))
   } else if (target_strand== "-") {
@@ -313,10 +308,10 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #' @param annot_file_dir The directory containing the GFF3 annotation file.
 #' @param output_file A string containing the name of an output file.
 #' @param original_sRNA_annotation A string indicating how the biotype of pre-annotated ncRNA, which can be found in the attribute column.In case if the user does not know how the sRNA is annotated, it can be set as "unknown". In this case, all RNAs apart from tRNAs and rRNAs will be removed from the selection.
-#' @param low_coverage_cutoff An interger indicating the low coverage threshold value.
-#' @param high_coverage_cutoff An interger indicating the high coverage threshold value.
-#' @param min_sRNA_length An interger indicating the minimum peak width/sRNA length.
-#' @param min_UTR_length An interger indicating the minimum UTR length.
+#' @param low_coverage_cutoff An integer indicating the low coverage threshold value.
+#' @param high_coverage_cutoff An integer indicating the high coverage threshold value.
+#' @param min_sRNA_length An integer indicating the minimum peak width/sRNA length.
+#' @param min_UTR_length An integer indicating the minimum UTR length.
 #' @param paired_end_data A boolean indicating if the reads are paired-end.
 #' @param strandedness A string outlining the type of the sequencing library: stranded, or reversely stranded.
 #' 
@@ -378,6 +373,6 @@ feature_file_editor <- function(bam_directory = ".", original_annotation_file, a
   write.table(header, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
   write.table(annotation_dataframe, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
   
-  return("FFE_pe, Done!")
+  return("Done!")
   
 }
