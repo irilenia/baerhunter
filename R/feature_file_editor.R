@@ -169,7 +169,7 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Select only the ranges that do not overlap the annotated features. Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
   #IGR_sRNAs <- union_peak_ranges[! union_peak_ranges IRanges::"%in%" subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L),]
-  IGR_sRNAs <- union_peak_ranges[! IRanges::match(union_peak_ranges, subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L), nomatch=0) >0,]
+  IGR_sRNAs <- union_peak_ranges[IRanges::match(union_peak_ranges, subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L), nomatch=0) == 0,]
   ## Construct the IDs for the new sRNAs to be added into the attribute colmn of the annotation.
   if (target_strand=="+") {
     names(IGR_sRNAs) <- apply(as.data.frame(IGR_sRNAs),1, function(x) paste("ID=putative_sRNA:p", x[1], "_", x[2], ";", sep = ''))
@@ -207,7 +207,7 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
   split_features <- disjoin(overapping_features)
   ## Now select only the UTR "overhangs" that are created by cutting overlapping features on the border.
   #UTRs <- split_features[! split_features %in% subsetByOverlaps(split_features, strand_IRange)]
-  UTRs <- split_features[! IRanges::match(split_features, subsetByOverlaps(split_features, strand_IRange), nomatch = 0) >0]
+  UTRs <- split_features[IRanges::match(split_features, subsetByOverlaps(split_features, strand_IRange), nomatch = 0) == 0]
   ## Select only UTRs that satisfy the minimum length condition.
   UTRs <- UTRs[width(UTRs)>=min_UTR_length,]
   ## Construct the IDs for the new UTRs to be added into the attribute colmn of the annotation.
