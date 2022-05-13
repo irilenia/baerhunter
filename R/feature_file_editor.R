@@ -114,7 +114,7 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
   if (annot_file_directory==".") {
     annot_file_loc <- annotation_file
   } else {
-    annot_file_loc <- paste(annot_file_directory, annotation_file, sep = "")
+    annot_file_loc <- paste(annot_file_directory, annotation_file, sep = "/")
   }
   
   gff <- read.delim(annot_file_loc, header = FALSE, comment.char = "#")
@@ -185,7 +185,7 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 #' 
 #' @param major_strand_features A dataframe containing the major features for a particular strand.
 #' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
-#' @param union_peak_ranges An IRannges object containing genomic coordinated for all peaks detected on the target strand.
+#' @param union_peak_ranges An IRanges object containing genomic coordinated for all peaks detected on the target strand.
 #' @param min_UTR_length An integer indicating the minimum UTR length.
 #' 
 #' @return An IRanges object containing coordinates and names of the predicted UTRs.
