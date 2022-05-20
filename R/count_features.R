@@ -1,6 +1,6 @@
 #' Assigning reads to genomic features
 #' 
-#' edited line 64 to make sep="/" for output directory JJS 20.05.22
+#' edited line 64, 69 to make sep="/" for output directory JJS 20.05.22
 #' 
 #' A wrapper function allowing to count reads to different typed of genomic features in one go. Designed to incorporate newly-discovered sRNAs and UTRs into the analysis.
 #' 
@@ -66,7 +66,8 @@ count_features <- function(bam_dir=".", annotation_dir=".", output_dir=".", anno
     write.table(fc$counts, count_file_name, sep = "\t")
     colnames(fc$stat) <- c('Status',sample_names)
     #IN added output_dir to name
-    summary_file_name <- paste(output_dir, feature_types[i], "Count_summary.csv", sep = "")
+    summary_file_name <- paste(output_dir, feature_types[i], sep = "/")
+    summary_file_name <- paste(summary_file_name, "Count_summary.csv", sep="")
     write.table(fc$stat, summary_file_name, sep = "\t")
   }
   return("Done!")
