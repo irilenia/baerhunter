@@ -356,7 +356,7 @@ feature_file_editor_list <- function(bam_directory = ".", bam_list = "", origina
   if (annot_file_dir==".") {
     annot_file_loc <- original_annotation_file
   } else {
-    annot_file_loc <- paste(annot_file_dir, original_annotation_file, sep = "")
+    annot_file_loc <- paste(annot_file_dir, original_annotation_file, sep = "/")
   }
   
   gff <- read.delim(annot_file_loc, header = FALSE, comment.char = "#")
