@@ -1,12 +1,14 @@
-#' Peak union calculation
+##' Peak union calculation
 #' 
 #' Edited JJS for PE improvement 21 Feb, 2022
 #' Edited JJS for match bug fix 13 May, 2022
+#' Edited JJS for using list of bam files 14 May, 2022
 #' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
 #' @param bam_location The directory containing BAM files.
-#' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
+#' @param bam_txt_list Optional newline separated text file of filenames of bam files. File must be located in bam_location directory. 
+#' @param target_strand A character string indicating the strand. Supports two values; '+' and '-'.
 #' @param low_coverage_cutoff An integer indicating the low coverage threshold value.
 #' @param high_coverage_cutoff An integer indicating the high coverage threshold value.
 #' @param peak_width An integer indicating the minimum peak width.
@@ -21,9 +23,16 @@
 #' @importFrom utils capture.output read.csv read.delim write.table
 #'
 #' @export
-peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cutoff, high_coverage_cutoff,  peak_width, paired_end_data = FALSE, strandedness  = "unstranded") {
+
+
+peak_union_calc <- function(bam_location = ".", bam_txt_list = "", target_strand, low_coverage_cutoff, high_coverage_cutoff,  peak_width, paired_end_data = FALSE, strandedness  = "unstranded") {
   ## Find all BAM files in the directory.
-  bam_files <- list.files(path = bam_location, pattern = ".BAM$", full.names = TRUE, ignore.case = TRUE)
+  if (bam_txt_list != ""){
+    bam_files <- readLines(bam_txt_list)
+    bam_files <- lapply(bam_files, function(x) paste(bam_location, x, sep="/"))
+  }else{
+    bam_files <- list.files(path = bam_location, pattern = ".BAM$", full.names = TRUE, ignore.case = TRUE)
+  }
   peak_union <- IRanges()
   ## Go over each BAM file to extract coverage peaks for a target strand and gradually build a union of all peak sets.
   for (f in bam_files) {
@@ -62,7 +71,7 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
       return(paste("Invalid BAM file:",f, sep = " "))
     }
     ## Cut the coverage vector to obtain the expression peaks with the coverage above the low cut-off values.
-    peaks <- slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
+    peaks <- IRanges::slice(strand_cvg[[target]], lower = low_coverage_cutoff, includeLower=TRUE)
     ## Examine the peaks for the stretches of coverage above the high cut-off. The stretches have to be a defined width.
     test <- viewApply(peaks, function(x) peak_analysis(x,high_coverage_cutoff,peak_width))
     ## Select only the peaks that satisfy the high cut-off condition.
@@ -86,6 +95,7 @@ peak_union_calc <- function(bam_location = ".", target_strand, low_coverage_cuto
 #' @return Returns a RleViews line if it satisfies conditions.
 #' 
 #' @export
+#' 
 peak_analysis <- function(View_line, high_cutoff, min_sRNA_length) {
   ## This is a helper function that is used to examine if the peak had a continuous stretch of a given width that has coverage above the high cut-off value.
   cvg_string <- as.vector(View_line)
@@ -128,7 +138,7 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
     ori_sRNA_biotype <- paste("biotype=", original_sRNA_annotation, sep = "")
   }
   
-  ## Select onlythe major genomic features: remove all child features (like CDS, mRNA etc.), previously annotated sRNAs and extra features
+  ## Select only the major genomic features: remove all child features (like CDS, mRNA etc.), previously annotated sRNAs and extra features
   major_f <- gff[grepl("Parent", gff[,9], ignore.case = TRUE)==FALSE & gff[,3]!='chromosome' & gff[,3]!='biological_region' & grepl(ori_sRNA_biotype, gff[,9], ignore.case = TRUE)==FALSE & gff[,3]!='region' & gff[,3]!='sequence_feature',]
   ## Select only major features for the target strand.
   m_strand_features <- data.frame()
@@ -151,22 +161,22 @@ major_features <- function(annotation_file, annot_file_directory = ".", target_s
 #' The function for prediction and annotation of sRNA.
 #' 
 #' @param major_strand_features A dataframe containing the major features for a particular strand.
-#' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
-#' @param union_peak_ranges An IRannges object containing genomic coordinated for all peaks detected on the target strand.
+#' @param target_strand A character string indicating the strand. Supports two values; '+' and '-'.
+#' @param union_peak_ranges An IRanges object containing genomic coordinated for all peaks detected on the target strand.
 #' 
 #' @return An IRanges object containing coordinates and names of the predicted sRNA.
 #' 
 #' @export
 sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
   ## This function predicts sRNAs.
-  ## Create function to make sure match is IRanges::match and not base
+  ## define function to make sure match is IRanges::match and not base
   match <- function(x, table) IRanges::match(x, table, nomatch = 0)
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
   ## Select only the ranges that do not overlap the annotated features
   ## Also, disregard the ranges that finish/start 1 position before the genomic feature, because they should be considered as UTRs.
   IGR_sRNAs <- union_peak_ranges[match(union_peak_ranges, subsetByOverlaps(union_peak_ranges, strand_IRange, maxgap = 1L)) == 0,]
-  ## Construct the IDs for the new sRNAs to be added into the attribute colmn of the annotation.
+  ## Construct the IDs for the new sRNAs to be added into the attribute column of the annotation.
   if (target_strand=="+") {
     names(IGR_sRNAs) <- apply(as.data.frame(IGR_sRNAs),1, function(x) paste("ID=putative_sRNA:p", x[1], "_", x[2], ";", sep = ''))
   } else if (target_strand== "-") {
@@ -193,7 +203,7 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 #' @export
 UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, min_UTR_length) {
   ## This function predicts UTRs.
-  ## Create function to make sure match is IRanges::match and not base
+  ## Define function to make sure match is IRanges::match and not base
   match <- function(x, table) IRanges::match(x, table, nomatch = 0)
   ## Convert strand feature coordinates into IRanges.
   strand_IRange <- IRanges(start = major_strand_features[,4], end = major_strand_features[,5])
@@ -225,7 +235,7 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
 #' 
 #' This function constructs the full annotation for the strand.
 #' 
-#' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
+#' @param target_strand A character string indicating the strand. Supports two values; '+' and '-'.
 #' @param sRNA_IRanges An IRanges object containing coordinates and names of the predicted sRNAs.
 #' @param UTR_IRanges An IRanges object containing coordinates and names of the predicted UTRs.
 #' @param major_strand_features A dataframe containing the major features for a particular strand.
@@ -233,8 +243,9 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
 #' @return A dataframe containing strand annotation populated with the prediction features, build in accordance with GFF3 file format.
 #' 
 #' @export
+#' 
+
 strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, major_strand_features) {
-  
   
   ## Join the sRNA and UTR ranges together.
   sRNA_UTR <- c(sRNA_IRanges, UTR_IRanges)
@@ -262,7 +273,7 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
   previous_feature_name <- sub("ID=.*?:(.*?);.*", "\\1", cmp_strand[nrow(cmp_strand),9])
   
   for (i in 1:nrow(cmp_strand)) {
-    ## Determinefeature type from the attribute column if the third column is empty.
+    ## Determine feature type from the attribute column if the third column is empty.
     feature_name <- sub("ID=.*?:(.*?);.*", "\\1", cmp_strand[i,9])
     if (cmp_strand[i,3]==".") {
       feature_type <- sub("ID=(.*?):.*?;.*", "\\1", cmp_strand[i,9])
@@ -304,6 +315,7 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #' A wrapper function that executes all prediction steps for each strand and builds the final GFF3 annotation.
 #' 
 #' @param bam_directory The directory containing BAM files.
+#' @param bam_list Optional newline separated text file of filenames of bam files. File must be located in bam_location directory. 
 #' @param original_annotation_file GFF3 genome annotation file.
 #' @param annot_file_dir The directory containing the GFF3 annotation file.
 #' @param output_file A string containing the name of an output file.
@@ -319,11 +331,11 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #'
 #' 
 #' @export
-feature_file_editor <- function(bam_directory = ".", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
+feature_file_editor_list <- function(bam_directory = ".", bam_list = "", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
   
   
   ## Plus strand
-  plus_strand_peaks <- peak_union_calc(bam_location = bam_directory, "+", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
+  plus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "+", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
   print("Extracted plus strand data from BAM files")
   maj_plus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "+", original_sRNA_annotation)
   plus_sRNA <- sRNA_calc(maj_plus_features, "+", plus_strand_peaks)
@@ -331,7 +343,7 @@ feature_file_editor <- function(bam_directory = ".", original_annotation_file, a
   plus_annot_dataframe <- strand_feature_editor("+", plus_sRNA, plus_UTR, maj_plus_features)
   print("Built plus strand annotation dataframe")
   ## Minus strand
-  minus_strand_peaks <- peak_union_calc(bam_location = bam_directory, "-", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
+  minus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "-", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
   print("Extracted minus strand data from BAM files")
   maj_minus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "-", original_sRNA_annotation)
   minus_sRNA <- sRNA_calc(maj_minus_features, "-", minus_strand_peaks)
