@@ -330,59 +330,62 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #' 
 #' @export
 feature_file_editor <- function(bam_directory = ".", bam_list = "", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
+  #JS add test for empty bam file directory
+  test <- list.files(path = bam_directory, pattern = ".BAM$", full.names = TRUE, ignore.case = TRUE)
+  if (length(test) > 0){
+    ## Plus strand
+    plus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "+", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
+    print("Extracted plus strand data from BAM files")
+    maj_plus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "+", original_sRNA_annotation)
+    plus_sRNA <- sRNA_calc(maj_plus_features, "+", plus_strand_peaks)
+    plus_UTR <- UTR_calc(maj_plus_features, "+", plus_strand_peaks, min_sRNA_length)
+    plus_annot_dataframe <- strand_feature_editor("+", plus_sRNA, plus_UTR, maj_plus_features)
+    print("Built plus strand annotation dataframe")
+    ## Minus strand
+    minus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "-", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
+    print("Extracted minus strand data from BAM files")
+    maj_minus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "-", original_sRNA_annotation)
+    minus_sRNA <- sRNA_calc(maj_minus_features, "-", minus_strand_peaks)
+    minus_UTR <- UTR_calc(maj_minus_features, "-", minus_strand_peaks, min_UTR_length)
+    minus_annot_dataframe <- strand_feature_editor("-", minus_sRNA, minus_UTR, maj_minus_features)
+    print("Built minus strand annotation dataframe")
   
+    ## Creating the final annotation dataframe by combining both strand dataframe and adding missing information like child features from the original GFF3 file.
+    annot_file_loc <- c()
+    if (annot_file_dir==".") {
+      annot_file_loc <- original_annotation_file
+    } else {
+      annot_file_loc <- paste(annot_file_dir, original_annotation_file, sep = "/")
+    }
   
-  ## Plus strand
-  plus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "+", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
-  print("Extracted plus strand data from BAM files")
-  maj_plus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "+", original_sRNA_annotation)
-  plus_sRNA <- sRNA_calc(maj_plus_features, "+", plus_strand_peaks)
-  plus_UTR <- UTR_calc(maj_plus_features, "+", plus_strand_peaks, min_sRNA_length)
-  plus_annot_dataframe <- strand_feature_editor("+", plus_sRNA, plus_UTR, maj_plus_features)
-  print("Built plus strand annotation dataframe")
-  ## Minus strand
-  minus_strand_peaks <- peak_union_calc(bam_location = bam_directory, bam_txt_list = bam_list, "-", low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, paired_end_data, strandedness)
-  print("Extracted minus strand data from BAM files")
-  maj_minus_features <- major_features(original_annotation_file, annot_file_directory = annot_file_dir, "-", original_sRNA_annotation)
-  minus_sRNA <- sRNA_calc(maj_minus_features, "-", minus_strand_peaks)
-  minus_UTR <- UTR_calc(maj_minus_features, "-", minus_strand_peaks, min_UTR_length)
-  minus_annot_dataframe <- strand_feature_editor("-", minus_sRNA, minus_UTR, maj_minus_features)
-  print("Built minus strand annotation dataframe")
+    gff <- read.delim(annot_file_loc, header = FALSE, comment.char = "#")
+    annotation_dataframe <- rbind(gff, plus_annot_dataframe, minus_annot_dataframe)
+    ## Remove all teh repeating information.
+    annotation_dataframe <- unique(annotation_dataframe)
+    ## Order the dataframe by feature start coordinates.
+    annotation_dataframe <- annotation_dataframe[order(annotation_dataframe[,4]),]
+    print("Prepared complete annotation dataframe")
   
-  ## Creating the final annotation dataframe by combining both strand dataframe and adding missing information like child features from the original GFF3 file.
-  annot_file_loc <- c()
-  if (annot_file_dir==".") {
-    annot_file_loc <- original_annotation_file
-  } else {
-    annot_file_loc <- paste(annot_file_dir, original_annotation_file, sep = "/")
+    ## Restore the original header.
+    f <- readLines(annot_file_loc)
+    header <- c()
+    i <- 1
+    while (grepl("#",f[i])==TRUE) {
+      f_line <- f[i]
+      header <- c(header,f_line)
+      i <- i+1
+    }
+    # add a line to indicate the origin of the file (single # commas should be ignored by programs)
+    header <- c(header, "# produced by baerhunter")
+  
+    print("Building output file now")
+  
+    ## Create the final GFF3 file.
+    write.table(header, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+    write.table(annotation_dataframe, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
+  
+    return("Done!")
+  }else{
+    return("No BAMs in bam directory!")
   }
-  
-  gff <- read.delim(annot_file_loc, header = FALSE, comment.char = "#")
-  annotation_dataframe <- rbind(gff, plus_annot_dataframe, minus_annot_dataframe)
-  ## Remove all teh repeating information.
-  annotation_dataframe <- unique(annotation_dataframe)
-  ## Order the dataframe by feature start coordinates.
-  annotation_dataframe <- annotation_dataframe[order(annotation_dataframe[,4]),]
-  print("Prepared complete annotation dataframe")
-  
-  ## Restore the original header.
-  f <- readLines(annot_file_loc)
-  header <- c()
-  i <- 1
-  while (grepl("#",f[i])==TRUE) {
-    f_line <- f[i]
-    header <- c(header,f_line)
-    i <- i+1
-  }
-  # add a line to indicate the origin of the file (single # commas should be ignored by programs)
-  header <- c(header, "# produced by baerhunter")
-  
-  print("Building output file now")
-  
-  ## Create the final GFF3 file.
-  write.table(header, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
-  write.table(annotation_dataframe, output_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append = TRUE)
-  
-  return("Done!")
-  
 }
