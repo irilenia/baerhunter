@@ -4,11 +4,15 @@
 \alias{strand_feature_editor}
 \title{Strand annotation}
 \usage{
-strand_feature_editor(target_strand, sRNA_IRanges, UTR_IRanges,
-  major_strand_features)
+strand_feature_editor(
+  target_strand,
+  sRNA_IRanges,
+  UTR_IRanges,
+  major_strand_features
+)
 }
 \arguments{
-\item{target_strand}{A character string indicating the strand. Supports two valies; '+' and '-'.}
+\item{target_strand}{A character string indicating the strand. Supports two values; '+' and '-'.}
 
 \item{sRNA_IRanges}{An IRanges object containing coordinates and names of the predicted sRNAs.}
 

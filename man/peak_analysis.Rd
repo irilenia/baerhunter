@@ -2,19 +2,19 @@
 % Please edit documentation in R/feature_file_editor.R
 \name{peak_analysis}
 \alias{peak_analysis}
-\title{Peak checking for the second coveralge threshold and width.}
+\title{Peak checking for the second coverage threshold and width.}
 \usage{
 peak_analysis(View_line, high_cutoff, min_sRNA_length)
 }
 \arguments{
-\item{View_line}{A line from a RIeViews object.}
+\item{View_line}{A line from a RleViews object.}
 
-\item{high_cutoff}{An interger indicating the high coverage threshold value.}
+\item{high_cutoff}{An integer indicating the high coverage threshold value.}
 
-\item{min_sRNA_length}{An interger indicating the minimum sRNA length (peak width).}
+\item{min_sRNA_length}{An integer indicating the minimum sRNA length (peak width).}
 }
 \value{
-Returns a RIeViews line if it satisfies conditions.
+Returns a RleViews line if it satisfies conditions.
 }
 \description{
 This is a helper function that is used to examine if the peak had a continuous stretch of a given width that has coverage above the high cut-off value.

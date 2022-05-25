@@ -4,8 +4,12 @@
 \alias{tpm_flag_filtering}
 \title{Filtering features by a target flag.}
 \usage{
-tpm_flag_filtering(complete_annotation_file, target_features, target_flag,
-  output_file)
+tpm_flag_filtering(
+  complete_annotation_file,
+  target_features,
+  target_flag,
+  output_file
+)
 }
 \arguments{
 \item{complete_annotation_file}{A flagged GFF3 annotation file.}

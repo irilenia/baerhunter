@@ -4,20 +4,29 @@
 \alias{peak_union_calc}
 \title{Peak union calculation}
 \usage{
-peak_union_calc(bam_location = ".", target_strand, low_coverage_cutoff,
-  high_coverage_cutoff, peak_width, paired_end_data = FALSE,
-  strandedness = "unstranded")
+peak_union_calc(
+  bam_location = ".",
+  bam_txt_list = "",
+  target_strand,
+  low_coverage_cutoff,
+  high_coverage_cutoff,
+  peak_width,
+  paired_end_data = FALSE,
+  strandedness = "unstranded"
+)
 }
 \arguments{
 \item{bam_location}{The directory containing BAM files.}
 
-\item{target_strand}{A character string indicating the strand. Supports two valies; '+' and '-'.}
+\item{bam_txt_list}{Optional newline separated text file of filenames of bam files. File must be located in bam_location directory.}
 
-\item{low_coverage_cutoff}{An interger indicating the low coverage threshold value.}
+\item{target_strand}{A character string indicating the strand. Supports two values; '+' and '-'.}
 
-\item{high_coverage_cutoff}{An interger indicating the high coverage threshold value.}
+\item{low_coverage_cutoff}{An integer indicating the low coverage threshold value.}
 
-\item{peak_width}{An interger indicating the minimum peak width.}
+\item{high_coverage_cutoff}{An integer indicating the high coverage threshold value.}
+
+\item{peak_width}{An integer indicating the minimum peak width.}
 
 \item{paired_end_data}{A boolean indicating if the reads are paired-end.}
 
@@ -27,5 +36,11 @@ peak_union_calc(bam_location = ".", target_strand, low_coverage_cutoff,
 An object of IRanges class, containing the genomic coordinates of selected and unified peaks.
 }
 \description{
+Edited JJS for PE improvement 21 Feb, 2022
+Edited JJS for match bug fix 13 May, 2022
+Edited JJS for using list of bam files 14 May, 2022
+Edited JJS for test bam directory 22 May, 2022
+}
+\details{
 The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 }

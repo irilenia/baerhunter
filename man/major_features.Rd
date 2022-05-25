@@ -4,8 +4,12 @@
 \alias{major_features}
 \title{Extract major features from the annotation file}
 \usage{
-major_features(annotation_file, annot_file_directory = ".",
-  target_strand, original_sRNA_annotation)
+major_features(
+  annotation_file,
+  annot_file_directory = ".",
+  target_strand,
+  original_sRNA_annotation
+)
 }
 \arguments{
 \item{annotation_file}{GFF3 genome annotation file.}

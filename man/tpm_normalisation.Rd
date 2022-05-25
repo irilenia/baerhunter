@@ -4,8 +4,7 @@
 \alias{tpm_normalisation}
 \title{TPM calculator}
 \usage{
-tpm_normalisation(count_table, complete_gff, target_feature,
-  output_file = NA)
+tpm_normalisation(count_table, complete_gff, target_feature, output_file = NA)
 }
 \arguments{
 \item{count_table}{A CSV file countaining feature counts for each sample.}

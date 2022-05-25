@@ -4,9 +4,17 @@
 \alias{count_features}
 \title{Assigning reads to genomic features}
 \usage{
-count_features(bam_dir = ".", annotation_dir = ".", output_dir = ".",
-  annotation_file, chromosome_alias_file, target_features, strandedness,
-  is_paired_end, ...)
+count_features(
+  bam_dir = ".",
+  annotation_dir = ".",
+  output_dir = ".",
+  annotation_file,
+  chromosome_alias_file,
+  target_features,
+  strandedness,
+  is_paired_end,
+  ...
+)
 }
 \arguments{
 \item{bam_dir}{The directory where bam files can be found.}
