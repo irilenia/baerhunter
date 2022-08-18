@@ -21,10 +21,6 @@
 #'
 #' @export
 peak_union_calc <- function(bam_location = ".", bam_txt_list = "", target_strand, low_coverage_cutoff, high_coverage_cutoff,  peak_width, paired_end_data = FALSE, strandedness  = "unstranded") {
-  ## Edited JJS for PE improvement 21 Feb, 2022
-  ## Edited JJS for match bug fix 13 May, 2022
-  ## Edited JJS for using list of bam files 14 May, 2022
-  ## Edited JJS for test bam directory 22 May, 2022
   ## Find all BAM files in the directory.
   if (bam_txt_list != ""){
     bam_files <- readLines(bam_txt_list)
@@ -190,7 +186,7 @@ sRNA_calc <- function(major_strand_features, target_strand, union_peak_ranges) {
 
 #' UTR prediction
 #' 
-#' The function for prediction and annotation of UTRs.
+#' Function for prediction and annotation of UTRs.
 #' 
 #' @param major_strand_features A dataframe containing the major features for a particular strand.
 #' @param target_strand A character string indicating the strand. Supports two valies; '+' and '-'.
@@ -242,8 +238,6 @@ UTR_calc <- function(major_strand_features, target_strand, union_peak_ranges, mi
 #' @return A dataframe containing strand annotation populated with the prediction features, build in accordance with GFF3 file format.
 #' 
 #' @export
-#' 
-
 strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, major_strand_features) {
   
   ## Join the sRNA and UTR ranges together.
@@ -331,7 +325,6 @@ strand_feature_editor <- function(target_strand, sRNA_IRanges, UTR_IRanges, majo
 #' 
 #' @export
 feature_file_editor <- function(bam_directory = ".", bam_list = "", original_annotation_file, annot_file_dir = ".", output_file, original_sRNA_annotation, low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length, min_UTR_length, paired_end_data = FALSE, strandedness  = "stranded") {
-  #JS add test for empty bam file directory
   test <- list.files(path = bam_directory, pattern = ".BAM$", full.names = TRUE, ignore.case = TRUE)
   if (length(test) > 0){
     ## Plus strand
