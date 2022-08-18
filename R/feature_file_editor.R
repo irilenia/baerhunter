@@ -1,9 +1,5 @@
-##' Peak union calculation
+#' Peak union calculation
 #' 
-#' Edited JJS for PE improvement 21 Feb, 2022
-#' Edited JJS for match bug fix 13 May, 2022
-#' Edited JJS for using list of bam files 14 May, 2022
-#' Edited JJS for test bam directory 22 May, 2022
 #' 
 #' The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 #' 
@@ -25,6 +21,10 @@
 #'
 #' @export
 peak_union_calc <- function(bam_location = ".", bam_txt_list = "", target_strand, low_coverage_cutoff, high_coverage_cutoff,  peak_width, paired_end_data = FALSE, strandedness  = "unstranded") {
+  ## Edited JJS for PE improvement 21 Feb, 2022
+  ## Edited JJS for match bug fix 13 May, 2022
+  ## Edited JJS for using list of bam files 14 May, 2022
+  ## Edited JJS for test bam directory 22 May, 2022
   ## Find all BAM files in the directory.
   if (bam_txt_list != ""){
     bam_files <- readLines(bam_txt_list)
