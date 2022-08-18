@@ -11,10 +11,10 @@ tpm_flagging(tpm_data, complete_annotation, output_file)
 
 \item{complete_annotation}{A GFF3 annotation file.}
 
-\item{output_file}{A string indicating the name of athe output file.}
+\item{output_file}{A string indicating the name of the output file.}
 }
 \value{
-A Gff3 file, where a target feature type has an expression flad added to its attribute column.
+A Gff3 file, where a target feature type has an expression flag added to its attribute column.
 }
 \description{
 A helper function to analyse each row of the TPM table. Each feature gets allocated a flag depending on the expression profile.

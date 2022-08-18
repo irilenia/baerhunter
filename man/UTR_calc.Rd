@@ -24,5 +24,5 @@ UTR_calc(
 An IRanges object containing coordinates and names of the predicted UTRs.
 }
 \description{
-The function for prediction and annotation of UTRs.
+Function for prediction and annotation of UTRs.
 }

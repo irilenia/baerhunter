@@ -4,16 +4,27 @@
 \alias{tpm_normalisation}
 \title{TPM calculator}
 \usage{
-tpm_normalisation(count_table, complete_gff, target_feature, output_file = NA)
+tpm_normalisation(
+  count_table,
+  complete_ann,
+  feature_type = c("putative_sRNA", "putative_UTR"),
+  is_gff = T,
+  output_file = NA,
+  excl_rna = T
+)
 }
 \arguments{
-\item{count_table}{A CSV file countaining feature counts for each sample.}
+\item{count_table}{A CSV file containing feature counts for each sample.}
 
-\item{complete_gff}{A GFF3 annotation file.}
+\item{complete_ann}{A GFF3 annotation file or SAF dataframe}
 
-\item{target_feature}{A string containing the feature type.}
+\item{feature_type}{A string indicating desired feature type(s) from annotation.}
 
-\item{output_file}{A string indicating the name of athe output file.}
+\item{is_gff}{A boolean indicating whether annotation is gff file, default=T}
+
+\item{output_file}{A string indicating the name of the output file.}
+
+\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are counted in addition to CDS and predicted RNA elements. (Defaults=T)}
 }
 \value{
 A dataframe with TPM values for each gene and sample; the same is written into the output file.

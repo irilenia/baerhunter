@@ -36,11 +36,5 @@ peak_union_calc(
 An object of IRanges class, containing the genomic coordinates of selected and unified peaks.
 }
 \description{
-Edited JJS for PE improvement 21 Feb, 2022
-Edited JJS for match bug fix 13 May, 2022
-Edited JJS for using list of bam files 14 May, 2022
-Edited JJS for test bam directory 22 May, 2022
-}
-\details{
 The function goes over each BAM file in the directory and finds the expression peaks that satisfy the coverage boundary and length criteria in each file. Then it unifies the peak information to obtain a single set of peak genomic coordinates.
 }
