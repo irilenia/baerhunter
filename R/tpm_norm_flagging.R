@@ -128,7 +128,7 @@ tpm_flagging <- function(tpm_data, complete_annotation, output_file) {
 #'
 #' A function to filter the marked features selected by the user by the flag of choice.
 #'
-#' @param complete_annotation_file A flagged GFF3 annotation file.
+#' @param flagged_annotation_file A flagged GFF3 annotation file.
 #' @param target_features A string indicating feature type to filter (optional).
 #' @param target_flag A string indicating a flag for filtering.
 #' @param output_file A string indicating the name of the output file.
@@ -138,29 +138,38 @@ tpm_flagging <- function(tpm_data, complete_annotation, output_file) {
 #'
 #' @importFrom utils read.delim write.table
 #' @export
-tpm_flag_filtering <- function(complete_annotation_file, target_features = c("putative_sRNA", "putative_UTR"), target_flag, output_file) {
+tpm_flag_filtering <- function(flagged_annotation_file, target_features = c("putative_sRNA", "putative_UTR"), target_flag, output_file) {
 
   ##load in annotation data.
-  annot_data <- read.delim(complete_annotation_file, header = FALSE, comment.char = "#")
+  annot_data <- read.delim(flagged_annotation_file, header = FALSE, comment.char = "#")
 
-  ## An internal function to go examine a table row: all target features are checked and filtered by the desired flag; all the other features are kept.
+  # An internal function to go examine a table row: all target features are checked and filtered by the desired flag; all the other features are kept.
   selection <- function(table_row, target_features, target_flag) {
     if ((as.character(table_row[[3]]) %in% target_features)==TRUE) {
       if (grepl(target_flag, as.character(table_row[[9]]), ignore.case = TRUE)==TRUE){
-        return(table_row)
+        return(TRUE)
+      }else{
+        return(FALSE)
       }
     } else if ((as.character(table_row[[3]]) %in% target_features)==FALSE) {
-      return(table_row)
+      return(TRUE)
     }
   }
-  ## Select the features by the flag and create a new dataframe.
-  filtered_selection <- apply(annot_data, 1, function(x) selection(x, target_features, target_flag))
-  selection_not_null <- filtered_selection[-which(sapply(filtered_selection, is.null))]
-  #IN df <- data.frame(matrix(unlist(selection_not_null), nrow=length(d), byrow=T))
-  df <- data.frame(matrix(unlist(selection_not_null), nrow=length(selection_not_null), byrow=T))
-
+  #apply function across all rows
+  # (error using apply with no null rows, this maintains matrix structure)
+  filtered_vec <- list(length(annot_data))
+  for (i in 1:nrow(annot_data)){
+    if (selection(annot_data[i,], target_features, target_flag) == TRUE){
+      filtered_vec[i] <- TRUE
+    }else{
+      filtered_vec[i] <- FALSE
+    }
+  }
+  filtered_selection <- annot_data[unlist(filtered_vec)==TRUE,]
+  selection_not_null <- filtered_selection[,lapply(filtered_selection, is.null)==FALSE]
+  df <- data.frame(matrix(unlist(selection_not_null), nrow=nrow(selection_not_null), byrow=F))
   ## Restore the original header.
-  f <- readLines(complete_annotation_file)
+  f <- readLines(flagged_annotation_file)
   header <- c()
   i <- 1
   while (grepl("#",f[i])==TRUE) {
