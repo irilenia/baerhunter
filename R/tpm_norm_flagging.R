@@ -34,7 +34,7 @@ tpm_normalisation <- function(count_table, complete_ann, feature_type = c("putat
   count_df <- read.delim(count_table)
 
   ## Calculate the length of the features, if they are in the right order.
-  assert_that(all(rownames(count_df) == feature_names), msg="Wrong feature order")
+  assert_that(all(rownames(count_df) == feature_names), msg="Wrong feature order. Is excl_rna param set the same as for count_features?")
   feature_lengths <- c()
   feature_lengths <- (nsaf_df$End-nsaf_df$Start+1)/1000
 
