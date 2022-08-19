@@ -5,14 +5,14 @@
 \title{Filtering features by a target flag.}
 \usage{
 tpm_flag_filtering(
-  complete_annotation_file,
+  flagged_annotation_file,
   target_features = c("putative_sRNA", "putative_UTR"),
   target_flag,
   output_file
 )
 }
 \arguments{
-\item{complete_annotation_file}{A flagged GFF3 annotation file.}
+\item{flagged_annotation_file}{A flagged GFF3 annotation file.}
 
 \item{target_features}{A string indicating feature type to filter (optional).}
 
