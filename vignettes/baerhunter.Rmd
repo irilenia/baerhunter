@@ -128,7 +128,7 @@ tpm_flagging( tpm_data="output_BH_5_10/counts_TPM.csv",
 
 
 # filter features according to their flags
-tpm_flag_filtering( complete_annotation_file="output_BH_5_10/flagged_mtb_5_10.gff3", 
+tpm_flag_filtering( flagged_annotation_file="output_BH_5_10/flagged_mtb_5_10.gff3", 
                     target_flag="high_expression_hit", 
                     target_features=c("putative_sRNA", "putative_UTR"), 
                     output_file="output_BH_5_10/filtered_high_expression_sRNA_mtb_5_10.gff3")
@@ -143,7 +143,11 @@ Following differential expression analysis with DESeq2, we print out the 10 top 
 
 ```{r differential_expression}
 #Call differential_expression() function
-de.res <- differential_expression(feature_count_file="output_BH_5_10/dataset_Counts.csv", metadata_file=system.file("extdata", "conditions.txt", package="baerhunter"), cutoff_value=10, multiple_variables=FALSE, main_condition="condition", output_file_name="output_BH_5_10/allCounts_diff_expression.csv")
+de.res <- differential_expression(
+  feature_count_file="output_BH_5_10/dataset_Counts.csv", 
+  metadata_file=system.file("extdata", "conditions.txt", package="baerhunter"), 
+  cutoff_value=10, multiple_variables=FALSE, main_condition="condition",   
+  output_file_name="output_BH_5_10/allCounts_diff_expression.csv")
 
 summary(de.res)
 resOrdered <- de.res[order(de.res$padj),]
