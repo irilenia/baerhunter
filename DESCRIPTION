@@ -1,6 +1,6 @@
 Package: baerhunter
 Title: Detection and Analysis of Expressed Intergenic Elements in Bacterial RNA-seq Data
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     c(person(given = "Alina",
              family = "Ozuna",
@@ -15,7 +15,7 @@ Authors@R:
              role = c("ctb"),
              email = "j.j.stiens@gmail.com"))
 Description: The baerhunter package comprises a set of tools for the prediction, annotation and filtering of bacterial intergenic expressed regions from RNA-seq data. In addition, it supports further stages of bacterial RNA-seq data analysis, such as transcript abundance quantification and differential gene expression testing. It also offers additional options for the selection of genomic features by their expression profile and editing of the annotation file. 
-License: Artistic-2.0 
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.0

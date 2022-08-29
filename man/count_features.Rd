@@ -34,7 +34,7 @@ count_features(
 
 \item{is_paired_end}{A boolean indicating if the reads are paired-end.}
 
-\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are counted in addition to CDS and predicted RNA elements. (Defaults=T)}
+\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are excluded from quantification. (Defaults=T)}
 
 \item{...}{Optional parameters passed on to featureCounts()  Default: allowMultiOverlap = T, fraction = T}
 }

@@ -6,7 +6,7 @@
 #' @param complete_ann A GFF3 annotation file or SAF dataframe
 #' @param feature_type A string indicating desired feature type(s) from annotation.
 #' @param is_gff A boolean indicating whether annotation is gff file, default=T
-#' @param excl_rna A boolean indicating if misc RNA features (rRNA, tRNA) are counted in addition to CDS and predicted RNA elements. (Defaults=T)
+#' @param excl_rna A boolean indicating if misc RNA features (rRNA, tRNA) are excluded from normalisation. (Defaults=T)
 #' @param output_file A string indicating the name of the output file.
 #'
 #' @return A dataframe with TPM values for each gene and sample; the same is written into the output file.
@@ -74,7 +74,7 @@ tpm_normalisation <- function(count_table, complete_ann, feature_type = c("putat
 #'
 #' A helper function to analyse each row of the TPM table. Each feature gets allocated a flag depending on the expression profile.
 #'
-#' @param tpm_data A CSV file containing TPM values for each feature in each sample.
+#' @param tpm_data A CSV file containing TPM values for each normalised feature in each sample.
 #' @param complete_annotation A GFF3 annotation file.
 #' @param output_file A string indicating the name of the output file.
 #'

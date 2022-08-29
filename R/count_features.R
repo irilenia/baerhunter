@@ -99,7 +99,7 @@ make_saf <- function(ann_file, exclude=F){
 #' @param chromosome_alias_file A comma-delimited TXT file containing a character string with the chromosome names. This file has to have two columns: first with the chromosome name in the annotation file, second with the chromosome name in the BAM file.
 #' @param strandedness A string outlining the type of the sequencing library: unstranded, stranded, or reversely stranded.
 #' @param is_paired_end A boolean indicating if the reads are paired-end.
-#' @param excl_rna A boolean indicating if misc RNA features (rRNA, tRNA) are counted in addition to CDS and predicted RNA elements. (Defaults=T)
+#' @param excl_rna A boolean indicating if misc RNA features (rRNA, tRNA) are excluded from quantification. (Defaults=T)
 #' @param ... Optional parameters passed on to featureCounts()  Default: allowMultiOverlap = T, fraction = T
 #'
 #' @return Count tables for each feature are written into separate files, as well as the result summary.

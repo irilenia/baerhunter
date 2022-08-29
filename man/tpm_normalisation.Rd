@@ -24,7 +24,7 @@ tpm_normalisation(
 
 \item{output_file}{A string indicating the name of the output file.}
 
-\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are counted in addition to CDS and predicted RNA elements. (Defaults=T)}
+\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are excluded from normalisation. (Defaults=T)}
 }
 \value{
 A dataframe with TPM values for each gene and sample; the same is written into the output file.

@@ -7,7 +7,7 @@
 tpm_flagging(tpm_data, complete_annotation, output_file)
 }
 \arguments{
-\item{tpm_data}{A CSV file containing TPM values for each feature in each sample.}
+\item{tpm_data}{A CSV file containing TPM values for each normalised feature in each sample.}
 
 \item{complete_annotation}{A GFF3 annotation file.}
 
