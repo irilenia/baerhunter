@@ -40,16 +40,22 @@ differential_expression <- function(feature_count_file, metadata_file, cutoff_va
   ## If there is only one experimental condition.
   if (length(conditions)==1 & multiple_variables==FALSE){
     if (main_condition==colnames(coldata)){
-      dds_formula <- as.formula(paste('design=', main_condition, sep = " ~ "))
+      #dds_formula <- as.formula(paste('design=', main_condition, sep = " ~ ")) #'design=' causing warning
+      dds_formula <- as.formula(paste("~", main_condition, sep = ""))
       DESeq_data <- DESeqDataSetFromMatrix(countData = round(count_data), colData = coldata,design= dds_formula)
     } else {
       return("Argument 'main_condition' does not match to the variable in the metadata table.")
     }
   } else if (length(conditions)>1 & multiple_variables==TRUE){
-    ## If there are multiple experimental conditions, incorporate them in the model.
+    ## If there are multiple experimental variables, incorporate them in the model.
     extra_conditions <- conditions[! conditions %in% main_condition]
-    dds_formula <- as.formula(paste('design=', paste(paste(extra_conditions, sep = ' +'), main_condition, sep = " + "), sep = " ~ "))
-    DESeq_data <- DESeqDataSetFromMatrix(countData = count_data, colData = coldata,design= dds_formula)
+    #dds_formula <- as.formula(paste('design=', paste(paste(extra_conditions, sep = ' +'), main_condition, sep = " + "), sep = " ~ "))
+    dds_formula <- as.formula(
+      paste("~ ",
+            paste(main_condition,
+                  paste(extra_conditions, collapse=" + "), sep = " + "),
+            sep = ""))
+    DESeq_data <- DESeqDataSetFromMatrix(countData = round(count_data), colData = coldata,design= dds_formula)
   } else {
     return("Mismatch in variable input.")
   }
