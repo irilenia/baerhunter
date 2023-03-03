@@ -1,6 +1,6 @@
 Package: baerhunter
 Title: Detection and Analysis of Expressed Intergenic Elements in Bacterial RNA-seq Data
-Version: 1.0.0
+Version: 0.9.1.0000
 Authors@R: 
     c(person(given = "Alina",
              family = "Ozuna",
