@@ -4,8 +4,14 @@
 \alias{differential_expression}
 \title{Differential gene expression analysis}
 \usage{
-differential_expression(feature_count_file, metadata_file, cutoff_value,
-  multiple_variables, main_condition, output_file_name)
+differential_expression(
+  feature_count_file,
+  metadata_file,
+  cutoff_value,
+  multiple_variables,
+  main_condition,
+  output_file_name
+)
 }
 \arguments{
 \item{feature_count_file}{A CSV file containing a table of counts for a particular feature type.}

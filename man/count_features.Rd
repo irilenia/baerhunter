@@ -2,34 +2,45 @@
 % Please edit documentation in R/count_features.R
 \name{count_features}
 \alias{count_features}
-\title{Assigning reads to genomic features}
+\title{count_features function}
 \usage{
-count_features(bam_dir = ".", annotation_dir = ".", output_dir = ".",
-  annotation_file, chromosome_alias_file, target_features, strandedness,
-  is_paired_end, ...)
+count_features(
+  bam_dir = ".",
+  annotation_dir = ".",
+  annotation_file,
+  output_dir = ".",
+  output_filename = "dataset",
+  chromosome_alias_file,
+  strandedness,
+  is_paired_end,
+  excl_rna = T,
+  ...
+)
 }
 \arguments{
-\item{bam_dir}{The directory where bam files can be found.}
+\item{bam_dir}{The directory where bam files located}
 
-\item{annotation_dir}{The directory where the annotation file can be found.}
+\item{annotation_dir}{The directory where annotation file is located}
 
-\item{output_dir}{The directory where the resulting CSV files will be deposited.}
+\item{annotation_file}{The complete annotation file: GFF3 or GTF genome annotation file}
 
-\item{annotation_file}{A GFF3 or GTF genome annotation file.}
+\item{output_dir}{The full directory path for CSV output files to be written}
+
+\item{output_filename}{The name for the output files--for example dataset name}
 
 \item{chromosome_alias_file}{A comma-delimited TXT file containing a character string with the chromosome names. This file has to have two columns: first with the chromosome name in the annotation file, second with the chromosome name in the BAM file.}
-
-\item{target_features}{A vector of strings outlining all feature types to be examined.}
 
 \item{strandedness}{A string outlining the type of the sequencing library: unstranded, stranded, or reversely stranded.}
 
 \item{is_paired_end}{A boolean indicating if the reads are paired-end.}
 
-\item{...}{Optional parameters passed on to featureCounts()}
+\item{excl_rna}{A boolean indicating if misc RNA features (rRNA, tRNA) are excluded from quantification. (Defaults=T)}
+
+\item{...}{Optional parameters passed on to featureCounts()  Default: allowMultiOverlap = T, fraction = T}
 }
 \value{
 Count tables for each feature are written into separate files, as well as the result summary.
 }
 \description{
-A wrapper function allowing to count reads to different typed of genomic features in one go. Designed to incorporate newly-discovered sRNAs and UTRs into the analysis.
+This is a function to employ Rsubread featureCounts to quantify expression of annotated and predicted elements
 }

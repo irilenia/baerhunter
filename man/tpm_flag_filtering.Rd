@@ -4,17 +4,21 @@
 \alias{tpm_flag_filtering}
 \title{Filtering features by a target flag.}
 \usage{
-tpm_flag_filtering(complete_annotation_file, target_features, target_flag,
-  output_file)
+tpm_flag_filtering(
+  flagged_annotation_file,
+  target_features = c("putative_sRNA", "putative_UTR"),
+  target_flag,
+  output_file
+)
 }
 \arguments{
-\item{complete_annotation_file}{A flagged GFF3 annotation file.}
+\item{flagged_annotation_file}{A flagged GFF3 annotation file.}
 
-\item{target_features}{A string indicating feature type to filter.}
+\item{target_features}{A string indicating feature type to filter (optional).}
 
 \item{target_flag}{A string indicating a flag for filtering.}
 
-\item{output_file}{A string indicating the name of athe output file.}
+\item{output_file}{A string indicating the name of the output file.}
 }
 \value{
 A GFF3 file where a target feature type is filtered by the expression flag of interest.

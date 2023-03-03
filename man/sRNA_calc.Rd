@@ -9,9 +9,9 @@ sRNA_calc(major_strand_features, target_strand, union_peak_ranges)
 \arguments{
 \item{major_strand_features}{A dataframe containing the major features for a particular strand.}
 
-\item{target_strand}{A character string indicating the strand. Supports two valies; '+' and '-'.}
+\item{target_strand}{A character string indicating the strand. Supports two values; '+' and '-'.}
 
-\item{union_peak_ranges}{An IRannges object containing genomic coordinated for all peaks detected on the target strand.}
+\item{union_peak_ranges}{An IRanges object containing genomic coordinated for all peaks detected on the target strand.}
 }
 \value{
 An IRanges object containing coordinates and names of the predicted sRNA.

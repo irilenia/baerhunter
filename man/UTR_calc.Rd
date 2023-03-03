@@ -4,15 +4,19 @@
 \alias{UTR_calc}
 \title{UTR prediction}
 \usage{
-UTR_calc(major_strand_features, target_strand, union_peak_ranges,
-  min_UTR_length)
+UTR_calc(
+  major_strand_features,
+  target_strand,
+  union_peak_ranges,
+  min_UTR_length
+)
 }
 \arguments{
 \item{major_strand_features}{A dataframe containing the major features for a particular strand.}
 
 \item{target_strand}{A character string indicating the strand. Supports two valies; '+' and '-'.}
 
-\item{union_peak_ranges}{An IRannges object containing genomic coordinated for all peaks detected on the target strand.}
+\item{union_peak_ranges}{An IRanges object containing genomic coordinated for all peaks detected on the target strand.}
 
 \item{min_UTR_length}{An integer indicating the minimum UTR length.}
 }
@@ -20,5 +24,5 @@ UTR_calc(major_strand_features, target_strand, union_peak_ranges,
 An IRanges object containing coordinates and names of the predicted UTRs.
 }
 \description{
-The function for prediction and annotation of UTRs.
+Function for prediction and annotation of UTRs.
 }

@@ -4,13 +4,25 @@
 \alias{feature_file_editor}
 \title{Prediction and annotation of sRNAs and UTRs from RNA-seq data}
 \usage{
-feature_file_editor(bam_directory = ".", original_annotation_file,
-  annot_file_dir = ".", output_file, original_sRNA_annotation,
-  low_coverage_cutoff, high_coverage_cutoff, min_sRNA_length,
-  min_UTR_length, paired_end_data = FALSE, strandedness = "stranded")
+feature_file_editor(
+  bam_directory = ".",
+  bam_list = "",
+  original_annotation_file,
+  annot_file_dir = ".",
+  output_file,
+  original_sRNA_annotation,
+  low_coverage_cutoff,
+  high_coverage_cutoff,
+  min_sRNA_length,
+  min_UTR_length,
+  paired_end_data = FALSE,
+  strandedness = "stranded"
+)
 }
 \arguments{
 \item{bam_directory}{The directory containing BAM files.}
+
+\item{bam_list}{Optional newline separated text file of filenames of bam files. File must be located in bam_location directory.}
 
 \item{original_annotation_file}{GFF3 genome annotation file.}
 
@@ -20,13 +32,13 @@ feature_file_editor(bam_directory = ".", original_annotation_file,
 
 \item{original_sRNA_annotation}{A string indicating how the biotype of pre-annotated ncRNA, which can be found in the attribute column.In case if the user does not know how the sRNA is annotated, it can be set as "unknown". In this case, all RNAs apart from tRNAs and rRNAs will be removed from the selection.}
 
-\item{low_coverage_cutoff}{An interger indicating the low coverage threshold value.}
+\item{low_coverage_cutoff}{An integer indicating the low coverage threshold value.}
 
-\item{high_coverage_cutoff}{An interger indicating the high coverage threshold value.}
+\item{high_coverage_cutoff}{An integer indicating the high coverage threshold value.}
 
-\item{min_sRNA_length}{An interger indicating the minimum peak width/sRNA length.}
+\item{min_sRNA_length}{An integer indicating the minimum peak width/sRNA length.}
 
-\item{min_UTR_length}{An interger indicating the minimum UTR length.}
+\item{min_UTR_length}{An integer indicating the minimum UTR length.}
 
 \item{paired_end_data}{A boolean indicating if the reads are paired-end.}
 

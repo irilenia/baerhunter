@@ -92,9 +92,6 @@ feature_file_editor(bam_directory=system.file("extdata/", package="baerhunter"),
 
 ```
 
-
-
-
 ## Counting reads against the new annotation produced by baerhunter
 Once new putative ncRNA features are added to the genome annotation, we use the *count_features()* function to count reads against both the original and newly annotated features.
 
@@ -103,12 +100,9 @@ count_features(bam_dir = system.file("extdata", package="baerhunter"),
                annotation_dir= "output_BH_5_10/", 
                annotation_file = "mtb_5_10.gff3", 
                output_dir = "output_BH_5_10/",
-               chromosome_alias_file = system.file("extdata","chromosome.txt", package="baerhunter") , 
-               target_features = c("gene", "putative_sRNA", "putative_UTR"), 
+               chromosome_alias_file = system.file("extdata","chromosome.txt", package="baerhunter") ,
                strandedness = "stranded", 
                is_paired_end= FALSE)
-
-
 
 ```
 
@@ -119,31 +113,22 @@ To filter transcripts by expression, we calculate first TPM (transcripts per mil
 
 ```{r filtering_by_expression}
 # Filter out low expression putative sRNAs
-# Calculate TPM values
-tpm<- tpm_normalisation(count_table="output_BH_5_10/putative_sRNA_Counts.csv", 
-                  complete_gff="output_BH_5_10/mtb_5_10.gff3", 
-                  target_feature="putative_sRNA", 
-                  output_file="output_BH_5_10/putative_sRNA_TPM.csv")
 
-
-#repeat for putative UTRs
-tpm <- tpm_normalisation(count_table="output_BH_5_10/putative_UTR_Counts.csv", 
-                  complete_gff="output_BH_5_10/mtb_5_10.gff3", 
-                  target_feature="putative_UTR", 
-                  output_file="output_BH_5_10/putative_UTR_TPM.csv")
-
-# produce a single file of TPM values for all non-coding RNAs
-system("( cat output_BH_5_10/putative_sRNA_TPM.csv ; tail -n +2 output_BH_5_10/putative_UTR_TPM.csv ; ) | cat > output_BH_5_10/putative_ncRNA_TPM.csv")
+# Calculate TPM values for putative features
+tpm<- tpm_normalisation(count_table="output_BH_5_10/dataset_Counts.csv", 
+                  complete_ann="output_BH_5_10/mtb_5_10.gff3", 
+                  is_gff = T,
+                  output_file="output_BH_5_10/counts_TPM.csv")
 
 
 # flag features according to their TPM values
-tpm_flagging( tpm_data="output_BH_5_10/putative_ncRNA_TPM.csv", 
+tpm_flagging( tpm_data="output_BH_5_10/counts_TPM.csv", 
               complete_annotation="output_BH_5_10/mtb_5_10.gff3", 
               output_file="output_BH_5_10/flagged_mtb_5_10.gff3")
 
 
 # filter features according to their flags
-tpm_flag_filtering( complete_annotation_file="output_BH_5_10/flagged_mtb_5_10.gff3", 
+tpm_flag_filtering( flagged_annotation_file="output_BH_5_10/flagged_mtb_5_10.gff3", 
                     target_flag="high_expression_hit", 
                     target_features=c("putative_sRNA", "putative_UTR"), 
                     output_file="output_BH_5_10/filtered_high_expression_sRNA_mtb_5_10.gff3")
@@ -157,11 +142,12 @@ Following differential expression analysis with DESeq2, we print out the 10 top 
 
 
 ```{r differential_expression}
-# Create a counts file with counts from genes and putative_sRNAs
-system("( cat output_BH_5_10/gene_Counts.csv ; tail -n +2 output_BH_5_10/putative_sRNA_Counts.csv; ) | cat > output_BH_5_10/allCounts.csv")
-
 #Call differential_expression() function
-de.res <- differential_expression(feature_count_file="output_BH_5_10/allCounts.csv", metadata_file=system.file("extdata", "conditions.txt", package="baerhunter"), cutoff_value=10, multiple_variables=FALSE, main_condition="condition", output_file_name="output_BH_5_10/allCounts_diff_expression.csv")
+de.res <- differential_expression(
+  feature_count_file="output_BH_5_10/dataset_Counts.csv", 
+  metadata_file=system.file("extdata", "conditions.txt", package="baerhunter"), 
+  cutoff_value=10, multiple_variables=FALSE, main_condition="condition",   
+  output_file_name="output_BH_5_10/allCounts_diff_expression.csv")
 
 summary(de.res)
 resOrdered <- de.res[order(de.res$padj),]
