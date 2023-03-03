@@ -9,7 +9,7 @@ by their expression strength and editing of the annotation file.
 ### References:
 A. Ozuna, D. Liberto, R. M. Joyce, K.B. Arnvig, I. Nobeli. baerhunter: An R package for the discovery 
 and analysis of expressed non-coding regions in bacterial RNA-seq data. 
-DOI: 10.1093/bioinformatics/btz643
+https://doi.org/10.1093/bioinformatics/btz643
 
 J. Stiens, Y.Y. Tan, R. Joyce, K.B. Arnvig, S.L. Kendall, I. Nobeli. Using a Whole Genome Co-expression Network to Inform the Functional Characterisation of Predicted Genomic Elements from Mycobacterium tuberculosis Transcriptomic Data. https://www.biorxiv.org/content/10.1101/2022.06.22.497203v3
 
