@@ -44,9 +44,7 @@ find_strandedness <- function(strand_param){
     strand_sp <- 1
   } else if(strand_param=="reversely_stranded"){
     strand_sp <- 2
-  } #else {
-  #  strand_sp <- 0
-  #}
+  }
   return(strand_sp)
 }
 
