@@ -31,17 +31,19 @@ read_annotation_file <- function(annot_dir, annot_file){
 #'
 #' @return strand_sp integer value
 #'
+#' @importFrom assertthat assert_that
 #' @export
 find_strandedness <- function(strand_param){
   strand_sp <- integer()
+  strand_strings <- c("unstranded", "reversely_stranded", "stranded")
+  assert_that(strand_param %in% strand_strings,
+              msg="Invalid strandedness parameter: must be either 'unstranded', 'stranded' or 'reversely_stranded'")
   if(strand_param=="unstranded"){
     strand_sp <- 0
   } else if(strand_param=="stranded"){
     strand_sp <- 1
   } else if(strand_param=="reversely_stranded"){
     strand_sp <- 2
-  } else {
-    strand_sp <- 0
   }
   return(strand_sp)
 }
